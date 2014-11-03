@@ -1,7 +1,7 @@
 require 'fileutils'
 require_relative '../../../test_helper'
 
-class HQMFV1V2RoundtripTest < Test::Unit::TestCase
+class HQMFV1V2RoundtripTest < Minitest::Test
   RESULTS_DIR = 'tmp/hqmf_r2.1_roundtrip_diffs'
 
   # Create a blank folder for the errors
@@ -91,9 +91,6 @@ class HQMFV1V2RoundtripTest < Test::Unit::TestCase
 
     # v2 switches negated preconditions non-negated equivalents (atLeastOneTrue[negated] -> allFalse)
     fix_precondition_negations(v1_json['population_criteria'])
-
-    # v2 ranges (in pauseQuantity) cannot be IVL_PQ, so change to PQ
-    fix_range_types(v1_json)
   end
 
   def update_v2_json(v2_json)
@@ -126,21 +123,4 @@ class HQMFV1V2RoundtripTest < Test::Unit::TestCase
     end
   end
 
-  def fix_range_types(root)
-    if (root['temporal_references'])
-      root['temporal_references'].each do |tr|
-        if tr['range'] && tr['range']['type'] == 'IVL_PQ'
-          tr['range']['type'] = 'PQ'
-        end
-      end
-    end
-
-    root.each_pair do |key, value|
-      if value.is_a? Hash
-        fix_range_types(value)
-      elsif value.is_a? Array and key != 'temporal_references'
-        value.each {|entry| fix_range_types(entry) if entry.is_a? Hash}
-      end
-    end
-  end
 end

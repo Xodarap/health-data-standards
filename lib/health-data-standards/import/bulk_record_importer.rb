@@ -7,29 +7,53 @@ module HealthDataStandards
         failed_dir ||= File.join(source_dir, '../', 'failed_imports')
         files = Dir.glob(File.join(source_dir, '*.*'))
         files.each do |file|
-           self.import_file(file,File.new(file).read,failed_dir)
+          BulkRecordImporter.import_file(file,File.new(file).read,failed_dir)
         end
       end
 
       def self.import_archive(file, failed_dir=nil)
         begin
-        failed_dir ||=File.join(File.dirname(file))
-        Zip::ZipFile.open(file.path) do |zipfile|
-          zipfile.entries.each do |entry|
-            next if entry.directory?
-            data = zipfile.read(entry.name)
-            self.import_file(entry.name,data,failed_dir)
+          failed_dir ||=File.join(File.dirname(file))
+
+          patient_id_list = nil
+
+          Zip::ZipFile.open(file.path) do |zipfile|
+            zipfile.entries.each do |entry|
+              if entry.name
+                if entry.name.split("/").last == "patient_manifest.txt"
+                  patient_id_list = zipfile.read(entry.name)
+                  next
+                end
+              end
+              next if entry.directory?
+              data = zipfile.read(entry.name)
+              BulkRecordImporter.import_file(entry.name,data,failed_dir)
+            end
           end
+
+          missing_patients = []
+
+          #if there was a patient manifest, theres a patient id list we need to load
+          if patient_id_list
+            patient_id_list.split("\n").each do |id|
+              patient = Record.where(:medical_record_number => id).first
+              if patient == nil
+                missing_patients << id
+              end
+            end
+          end
+
+          missing_patients
+
+        rescue
+          FileUtils.mkdir_p(failed_dir)
+          FileUtils.cp(file,File.join(failed_dir,File.basename(file)))
+          File.open(File.join(failed_dir,"#{file}.error")) do |f|
+            f.puts($!.message)
+            f.puts($!.backtrace)
+          end
+          raise $!
         end
-      rescue
-        FileUtils.mkdir_p(failed_dir)
-        File.cp(file,File.join(failed_dir,file))
-        File.open(File.join(failed_dir,"#{file}.error")) do |f|
-          f.puts($!.message)
-          f.puts($!.backtrace)
-        end
-        raise $!
-      end
       end
 
       def self.import_file(name,data,failed_dir,provider_map={})
@@ -54,10 +78,19 @@ module HealthDataStandards
 
       def self.import_json(data,provider_map = {})
         json = JSON.parse(data,:max_nesting=>100)
-        Record.update_or_create(Record.new(json))
+        record = Record.update_or_create(Record.new(json))
+        providers = record.provider_performances
+        providers.each do |prov|
+          prov.provider.ancestors.each do |ancestor|
+            record.provider_performances.push(ProviderPerformance.new(start_date: prov.start_date, end_date: prov.end_date, provider: ancestor))
+          end
+        end
+        record.save!
       end
 
-      def self.import(xml_data, provider_map = {}, doc = Nokogiri::XML(xml_data))
+      def self.import(xml_data, provider_map = {})
+        doc = Nokogiri::XML(xml_data)
+
         providers = []
         root_element_name = doc.root.name
 
@@ -76,8 +109,10 @@ module HealthDataStandards
             return {status: 'error', message: "Document templateId does not identify it as a C32 or CCDA", status_code: 400}
           end
 
+          record = Record.update_or_create(patient_data)
+
           begin
-            providers = CDA::ProviderImporter.instance.extract_providers(doc)
+            providers = CDA::ProviderImporter.instance.extract_providers(doc, record)
           rescue Exception => e
             STDERR.puts "error extracting providers"
           end
@@ -85,7 +120,6 @@ module HealthDataStandards
           return {status: 'error', message: 'Unknown XML Format', status_code: 400}
         end
 
-        record = Record.update_or_create(patient_data)
         record.provider_performances = providers
         providers.each do |prov|
           prov.provider.ancestors.each do |ancestor|

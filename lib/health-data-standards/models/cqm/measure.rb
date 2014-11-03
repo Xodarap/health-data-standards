@@ -11,6 +11,7 @@ module HealthDataStandards
       field :sub_id, type: String
       field :cms_id, type: String
       field :name, type: String
+      field :title, type: String
       field :description, type: String
       field :subtitle, type: String
       field :short_subtitle, type: String
@@ -34,7 +35,7 @@ module HealthDataStandards
       field :map_fn, type: String
       field :continuous_variable, type: Boolean
       field :episode_of_care, type: Boolean
-      
+      field :aggregator, type: String
       embeds_many :prefilters
 
       scope :top_level_by_type , ->(type){where({"type"=> type}).any_of({"sub_id" => nil}, {"sub_id" => "a"})}
@@ -51,28 +52,37 @@ module HealthDataStandards
       validates_presence_of :id
       validates_presence_of :name
 
-      def self.categories
+      def self.categories(measure_properties = [])
+        measure_properties = Array(measure_properties).map(&:to_s) | %w(
+          name description nqf_id cms_id hqmf_id continuous_variable episode_of_care
+        )
         pipeline = []
-        pipeline << {'$group' => {_id: "$id",
-                                  name: {"$first" => "$name"},
-                                  description: {"$first" => "$description"},
-                                  subs: {'$push' => {"sub_id" => "$sub_id", "short_subtitle" => "$short_subtitle"}},
-                                  sub_ids: {'$push' => "$sub_id"},
-                                  nqf_id: {"$first" => "$nqf_id"},
-                                  cms_id: {"$first" => "$cms_id"},
-                                  continuous_variable: {"$first" => "$continuous_variable"},
-                                  category: {'$first' => "$category"}}}
 
-        pipeline << {'$group' => {_id: "$category",
-                                  measures: {'$push' => {"id" => "$_id",
-                                             'name' => "$name",
-                                             'description' => "$description",
-                                             'subs' => "$subs",
-                                             'sub_ids' => "$sub_ids",
-                                             'nqf_id' => "$nqf_id",
-                                             'cms_id' => "$cms_id",
-                                             'continuous_variable' => "$continuous_variable"
-                                            }}}}
+        pipeline << {'$group' =>  measure_properties.inject({
+                                    '_id' => "$id",
+                                    'subs' => {'$push' => {"sub_id" => "$sub_id", "short_subtitle" => "$short_subtitle"}},
+                                    'sub_ids' => {'$push' => "$sub_id"},
+                                    'category' => {'$first' => "$category"}
+                                  }) do |h, prop|
+                                    h[prop] = {"$first" => "$#{prop}"}
+                                    h
+                                  end
+                    }
+
+        pipeline << {'$group' => {
+                      _id: "$category",
+                      measures: {
+                        '$push' =>  measure_properties.inject({
+                                      'id' => "$_id",
+                                      'hqmf_id' => "$_id",
+                                      'subs' => "$subs",
+                                      'sub_ids' => "$sub_ids"
+                                    }) do |h, prop|
+                                      h[prop] = "$#{prop}"
+                                      h
+                                    end
+                      }
+                    }}
 
         pipeline << {'$project' => {'category' => '$_id', 'measures' => 1, '_id' => 0}}
 

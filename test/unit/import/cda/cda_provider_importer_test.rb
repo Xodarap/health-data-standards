@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class CDAProviderImporterTest < MiniTest::Unit::TestCase
+class CDAProviderImporterTest < Minitest::Test
 
 	def setup
     Provider.where({}).delete
@@ -8,7 +8,7 @@ class CDAProviderImporterTest < MiniTest::Unit::TestCase
 	end
 
   def teardown
-    def Provider.resolve_provider(p) 
+    def Provider.resolve_provider(p, q)
     end
     Provider.where({}).delete
   end
@@ -66,7 +66,7 @@ class CDAProviderImporterTest < MiniTest::Unit::TestCase
   end
 
   def test_import_resolve_provider
-    def Provider.resolve_provider(p) 
+    def Provider.resolve_provider(p, q)
       Provider.first
     end
     assert_equal 0, Provider.count, "Should be 0 providers in the DB"
