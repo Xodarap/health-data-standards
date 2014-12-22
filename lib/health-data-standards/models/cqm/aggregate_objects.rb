@@ -109,7 +109,7 @@ module HealthDataStandards
           end
           unless population_type == 'stratification' || population_type == 'STRAT'
             if cache_entry.is_stratification?
-              strat_id = cache_entry.population_ids['STRAT']
+              strat_id = cache_entry.population_ids['stratification']
               population.add_stratification(strat_id,cache_entry[population_type])
             else
               population.value = cache_entry[population_type]
