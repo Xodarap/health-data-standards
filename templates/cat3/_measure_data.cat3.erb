@@ -86,8 +86,9 @@
   <% end -%>
   <% if population.supplemental_data.present? -%>
   <%   sex_supplimental_data = population.supplemental_data["SEX"]
-       if sex_supplimental_data.present?
-         sex_supplimental_data.each do |sex, count| -%>
+       supplemental_info[:sex].each do |concept|
+         sex = concept
+         count = sex_supplimental_data[sex] || 0 -%>
    
    <!--    SEX Supplemental Data Reporting for <%= population.type %>  <%= population.id %>      --> 
          
@@ -97,10 +98,10 @@
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => sex,
                 :supplemental_data_value_code_system => '2.16.840.1.113883.5.1', :count => count} %>   
       <% end -%>
-    <% end -%>
   <%   ethnicity_supplimental_data = population.supplemental_data["ETHNICITY"]
-       if ethnicity_supplimental_data.present?
-         ethnicity_supplimental_data.each do |ethnicity, count| -%>
+       supplemental_info[:ethnicity].each do |concept|
+         ethnicity = concept
+         count = sex_supplimental_data[ethnicity] || 0 -%>
 
     <!--     ETHNICITY Supplemental Data Reporting  for <%= population.type %>  <%= population.id %>     --> 
 
@@ -110,10 +111,9 @@
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => ethnicity,
                 :supplemental_data_value_code_system => '2.16.840.1.113883.6.238', :count => count} %>   
       <% end -%>
-    <% end -%>
   <%   race_supplimental_data = population.supplemental_data["RACE"]
         supplemental_info[:race].each do |concept|
-            race = concept.code
+            race = concept
             count = race_supplimental_data[race] || 0
   -%>
 
@@ -125,12 +125,12 @@
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => race,
                 :supplemental_data_value_code_system => '2.16.840.1.113883.6.238', :count => count} %>   
       <% end -%>
-    <% #end -%>
   <%   payer_supplimental_data = population.supplemental_data["CMS_PAYER"]
        if payer_supplimental_data.present?
          payer_supplimental_data.each do |payer, count| -%>
 
- <!--         PAYER Supplemental Data Reporting   for<%= population.type %>  <%= population.id %>   -->        
+ <!--         PAYER Supplemental Data Reporting   for<%= population.type %>  <%= population.id %>   -->
+
   <%== render :partial => 'supplemental_data', :locals => {:template_name => 'Payer Supplemental Data', 
                 :template_id => '2.16.840.1.113883.10.20.27.3.9', :cms_template_id => '2.16.840.1.113883.10.20.27.3.18',
                 :supplemental_data_code => '48768-6',

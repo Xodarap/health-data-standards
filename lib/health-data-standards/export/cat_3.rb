@@ -12,9 +12,9 @@ module HealthDataStandards
 
       def get_supplemental_info
         vset = HealthDataStandards::SVS::ValueSet
-        {:race => vset.where({:oid => '2.16.840.1.114222.4.11.836'}).first.concepts,
+        {:race => vset.where({:oid => '2.16.840.1.114222.4.11.836'}).first.concepts.map(&:code),
          :sex => ['F','M','UN'],  # 2.16.840.1.113883.1.11.1
-         :ethnicity => vset.where({:oid => '2.16.840.1.114222.4.11.837'}).first.concepts}
+         :ethnicity => vset.where({:oid => '2.16.840.1.114222.4.11.837'}).first.concepts.map(&:code)}
       end
 
       def export(measures, header, effective_date, start_date, end_date, filter=nil,test_id=nil)
