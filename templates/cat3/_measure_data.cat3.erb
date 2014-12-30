@@ -112,8 +112,10 @@
       <% end -%>
     <% end -%>
   <%   race_supplimental_data = population.supplemental_data["RACE"]
-       if race_supplimental_data.present?
-         race_supplimental_data.each do |race, count| -%>
+        supplemental_info[:race].each do |concept|
+            race = concept.code
+            count = race_supplimental_data[race] || 0
+  -%>
 
    <!--      RACE Supplemental Data Reporting  for <%= population.type %>  <%= population.id %> --> 
 
@@ -123,8 +125,8 @@
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => race,
                 :supplemental_data_value_code_system => '2.16.840.1.113883.6.238', :count => count} %>   
       <% end -%>
-    <% end -%>
-  <%   payer_supplimental_data = population.supplemental_data["PAYER"]
+    <% #end -%>
+  <%   payer_supplimental_data = population.supplemental_data["CMS_PAYER"]
        if payer_supplimental_data.present?
          payer_supplimental_data.each do |payer, count| -%>
 
