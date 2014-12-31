@@ -46,7 +46,8 @@
             displayName="Assertion" 
             codeSystemName="ActCode"/>
       <statusCode code="completed"/>
-      <!-- TODO: (CONF:711232) requires us to know the code element in the measure, but this isn't stored
+      <!-- TODO: (CONF:711232) requires us to know the code element in the measure, but this isn't stored.
+                value is a SHOULD though. Might always be 2112-8 birth date?
       <value xsi:type="CD" nullFlavor="OTH">
        <originalText>Stratum</originalText>
       </value>
@@ -54,10 +55,14 @@
       <entryRelationship typeCode="SUBJ" inversionInd="true">
         <observation classCode="OBS" moodCode="EVN">
           <templateId root="2.16.840.1.113883.10.20.27.3.3"/>
+          <!-- Aggregate Count (CMS EP) template ID CONF:711263. -->
+          <templateId root="2.16.840.1.113883.10.20.27.3.24"/>
           <code code="MSRAGG" 
                 displayName="rate aggregation" 
                 codeSystem="2.16.840.1.113883.5.4" 
                 codeSystemName="ActCode"/>
+          <!-- (CONF:711245) -->
+          <statusCode code="completed"/>
           <value xsi:type="INT" value="<%= strat.value.round %>"/>
           <methodCode code="COUNT" 
                       displayName="Count" 
@@ -126,8 +131,9 @@
                 :supplemental_data_value_code_system => '2.16.840.1.113883.6.238', :count => count} %>   
       <% end -%>
   <%   payer_supplimental_data = population.supplemental_data["CMS_PAYER"]
-       if payer_supplimental_data.present?
-         payer_supplimental_data.each do |payer, count| -%>
+       supplemental_info[:payer].each do |concept|
+         payer = concept
+         count = payer_supplimental_data[payer] || 0 -%>
 
  <!--         PAYER Supplemental Data Reporting   for<%= population.type %>  <%= population.id %>   -->
 
@@ -135,8 +141,7 @@
                 :template_id => '2.16.840.1.113883.10.20.27.3.9', :cms_template_id => '2.16.840.1.113883.10.20.27.3.18',
                 :supplemental_data_code => '48768-6',
                 :supplemental_data_code_system => '2.16.840.1.113883.6.1', :supplemental_data_value_code => payer,
-                :supplemental_data_value_code_system => '2.16.840.1.113883.3.221.5', :count => count} %>   
-      <% end -%>
+                :supplemental_data_value_code_system => '2.16.840.1.113883.3.221.5', :count => count} %>
     <% end -%>
   <% end -%>
   <% if population.type == 'MSRPOPL' -%>

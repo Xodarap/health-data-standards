@@ -14,7 +14,9 @@ module HealthDataStandards
         vset = HealthDataStandards::SVS::ValueSet
         {:race => vset.where({:oid => '2.16.840.1.114222.4.11.836'}).first.concepts.map(&:code),
          :sex => ['F','M','UN'],  # 2.16.840.1.113883.1.11.1
-         :ethnicity => vset.where({:oid => '2.16.840.1.114222.4.11.837'}).first.concepts.map(&:code)}
+         :ethnicity => vset.where({:oid => '2.16.840.1.114222.4.11.837'}).first.concepts.map(&:code),
+         :payer => ['A', "B", 'C', 'D']
+        }
       end
 
       def export(measures, header, effective_date, start_date, end_date, filter=nil,test_id=nil)
