@@ -88,9 +88,7 @@ module HealthDataStandards
         record.save!
       end
 
-      def self.import(xml_data, provider_map = {})
-        doc = Nokogiri::XML(xml_data)
-
+      def self.import(xml_data, provider_map = {}, doc = Nokogiri::XML(xml_data))
         providers = []
         root_element_name = doc.root.name
 
