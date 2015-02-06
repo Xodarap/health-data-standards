@@ -25,6 +25,7 @@ module HealthDataStandards
                 next
               end
             end
+            p entry.name
             next if entry.directory?
             data = zipfile.read(entry.name)
             self.import_file(entry.name,data,failed_dir)
@@ -45,13 +46,14 @@ module HealthDataStandards
 
         missing_patients
 
-      rescue
-        FileUtils.mkdir_p(failed_dir)
-        FileUtils.cp(file,File.join(failed_dir,File.basename(file)))
-        File.open(File.join(failed_dir,"#{file}.error")) do |f|
-          f.puts($!.message)
-          f.puts($!.backtrace)
-        end
+        rescue
+          # btw this breaks and is stupid
+        # FileUtils.mkdir_p(failed_dir)
+        # FileUtils.cp(file,File.join(failed_dir,File.basename(file)))
+        # File.open(File.join(failed_dir,"#{file}.error")) do |f|
+        #   f.puts($!.message)
+        #   f.puts($!.backtrace)
+        # end
         raise $!
       end
       end
@@ -65,14 +67,15 @@ module HealthDataStandards
             self.import(data)
           end
         rescue
-          FileUtils.mkdir_p(File.dirname(File.join(failed_dir,name)))
-          File.open(File.join(failed_dir,name),"w") do |f|
-            f.puts(data)
-          end
-          File.open(File.join(failed_dir,"#{name}.error"),"w") do |f|
-            f.puts($!.message)
-            f.puts($!.backtrace)
-          end
+          #FileUtils.mkdir_p(File.dirname(File.join(failed_dir,name)))
+          #File.open(File.join(failed_dir,name),"w") do |f|
+          #  f.puts(data)
+          #end
+          #File.open(File.join(failed_dir,"#{name}.error"),"w") do |f|
+          #  f.puts($!.message)
+          #  f.puts($!.backtrace)
+          #end
+          raise $!
         end
       end
 
