@@ -144,13 +144,13 @@ Measure Section
                   <!-- SHALL: required Id but not restricted to the eMeasure Document/Id-->
                   <!-- QualityMeasureDocument/id This is the version specific identifier for eMeasure -->
                   <id root="<%= measure['hqmf_id'] %>"/>
-
+                  <code code="57024-2" displayName="Health Quality Measure Document" codeSystemName="LOINC" codeSystem="2.16.840.1.113883.6.1" />
                   <!-- SHOULD This is the title of the eMeasure -->
                   <text><%= measure['name'] %></text>
                   <!-- SHOULD: setId is the eMeasure version neutral id  -->
                   <setId root="<%= measure['hqmf_set_id'] %>"/>
                   <!-- This is the sequential eMeasure Version number -->
-                  <versionNumber value="1"/>
+                  <versionNumber value="<%= measure['hqmf_version_number'] %>"/>
                 </externalDocument>
               </reference>
 
