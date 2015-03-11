@@ -11,7 +11,7 @@ module HealthDataStandards
         end
       end
 
-      def self.import_archive(file, failed_dir=nil)
+      def self.import_archive(file, failed_dir=nil, import_type = nil)
         begin
         failed_dir ||=File.join(File.dirname(file))
 
@@ -28,7 +28,7 @@ module HealthDataStandards
             p entry.name
             next if entry.directory?
             data = zipfile.read(entry.name)
-            self.import_file(entry.name,data,failed_dir)
+            self.import_file(entry.name,data,failed_dir, {}, import_type)
           end
         end
 
@@ -58,13 +58,13 @@ module HealthDataStandards
       end
       end
 
-      def self.import_file(name,data,failed_dir,provider_map={})
+      def self.import_file(name,data,failed_dir,provider_map={}, import_type = nil)
         begin
           ext = File.extname(name)
           if ext == ".json"
             self.import_json(data)
           else
-            self.import(data)
+            self.import(data, {}, nil, import_type)
           end
         rescue
           #FileUtils.mkdir_p(File.dirname(File.join(failed_dir,name)))
@@ -91,7 +91,7 @@ module HealthDataStandards
         record.save!
       end
 
-      def self.import(xml_data, provider_map = {}, doc = Nokogiri::XML(xml_data))
+      def self.import(xml_data, provider_map = {}, doc = Nokogiri::XML(xml_data), import_type = nil)
         providers = []
         root_element_name = doc.root.name
 
