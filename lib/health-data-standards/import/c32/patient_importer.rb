@@ -128,8 +128,8 @@ module HealthDataStandards
           patient_role_element = doc.at_xpath('/cda:ClinicalDocument/cda:recordTarget/cda:patientRole')
           patient_element = patient_role_element.at_xpath('./cda:patient')
           patient.title = patient_element.at_xpath('cda:name/cda:title').try(:text)
-          patient.first = patient_element.at_xpath('cda:name/cda:given').text
-          patient.last = patient_element.at_xpath('cda:name/cda:family').text
+          patient.first = patient_element.at_xpath('cda:name/cda:given').try(:text)
+          patient.last = patient_element.at_xpath('cda:name/cda:family').try(:text)
           birthdate_in_hl7ts_node = patient_element.at_xpath('cda:birthTime')
           birthdate_in_hl7ts = birthdate_in_hl7ts_node['value']
           patient.birthdate = HL7Helper.timestamp_to_integer(birthdate_in_hl7ts)
