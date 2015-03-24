@@ -7,7 +7,7 @@ module HealthDataStandards
         failed_dir ||= File.join(source_dir, '../', 'failed_imports')
         files = Dir.glob(File.join(source_dir, '*.*'))
         files.each do |file|
-           self.import_file(file,File.new(file).read,failed_dir)
+          self.import_file(file,File.new(file).read,failed_dir)
         end
       end
 
@@ -88,9 +88,7 @@ module HealthDataStandards
         record.save!
       end
 
-      def self.import(xml_data, provider_map = {})
-        doc = Nokogiri::XML(xml_data)
-
+      def self.import(xml_data, provider_map = {}, doc = Nokogiri::XML(xml_data))
         providers = []
         root_element_name = doc.root.name
 
