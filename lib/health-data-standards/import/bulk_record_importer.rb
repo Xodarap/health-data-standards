@@ -121,7 +121,7 @@ module HealthDataStandards
           return {status: 'error', message: 'Unknown XML Format', status_code: 400}
         end
 
-        record.provider_performances = providers
+        record.provider_performances << providers
         providers.each do |prov|
           prov.provider.ancestors.each do |ancestor|
             record.provider_performances.push(ProviderPerformance.new(start_date: prov.start_date, end_date: prov.end_date, provider: ancestor))

@@ -142,6 +142,7 @@ class Record
   end
 
   def merge!(other)
+    self.birthdate = other.birthdate || self.birthdate
     # demographics
     self.attributes.merge!(other.attributes.except('_id'))
 
