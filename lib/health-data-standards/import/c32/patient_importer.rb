@@ -128,8 +128,8 @@ module HealthDataStandards
           patient_role_element = doc.at_xpath('/cda:ClinicalDocument/cda:recordTarget/cda:patientRole')
           patient_element = patient_role_element.at_xpath('./cda:patient')
           patient.title = patient_element.at_xpath('cda:name/cda:title').try(:text)
-          patient.first = patient_element.at_xpath('cda:name/cda:given').text
-          patient.last = patient_element.at_xpath('cda:name/cda:family').text
+          patient.first = patient_element.at_xpath('cda:name/cda:given').try(:text)
+          patient.last = patient_element.at_xpath('cda:name/cda:family').try(:text)
           birthdate_in_hl7ts_node = patient_element.at_xpath('cda:birthTime')
           birthdate_in_hl7ts = birthdate_in_hl7ts_node['value']
           patient.birthdate = HL7Helper.timestamp_to_integer(birthdate_in_hl7ts)
@@ -138,6 +138,7 @@ module HealthDataStandards
           patient.gender = gender_node['code']
           id_node = patient_role_element.at_xpath('./cda:id')
           patient.medical_record_number = id_node['extension']
+          patient.medical_record_assigner = id_node['root']
           
           # parse race, ethnicity, and spoken language
           race_node = patient_element.at_xpath('cda:raceCode')

@@ -7,11 +7,11 @@ module HealthDataStandards
         failed_dir ||= File.join(source_dir, '../', 'failed_imports')
         files = Dir.glob(File.join(source_dir, '*.*'))
         files.each do |file|
-           BulkRecordImporter.import_file(file,File.new(file).read,failed_dir)
+           self.import_file(file,File.new(file).read,failed_dir)
         end
       end
 
-      def self.import_archive(file, failed_dir=nil)
+      def self.import_archive(file, failed_dir=nil, import_type = nil)
         begin
         failed_dir ||=File.join(File.dirname(file))
 
@@ -25,9 +25,10 @@ module HealthDataStandards
                 next
               end
             end
+            p entry.name
             next if entry.directory?
             data = zipfile.read(entry.name)
-            BulkRecordImporter.import_file(entry.name,data,failed_dir)
+            self.import_file(entry.name,data,failed_dir, {}, import_type)
           end
         end
 
@@ -45,34 +46,36 @@ module HealthDataStandards
 
         missing_patients
 
-      rescue
-        FileUtils.mkdir_p(failed_dir)
-        FileUtils.cp(file,File.join(failed_dir,File.basename(file)))
-        File.open(File.join(failed_dir,"#{file}.error")) do |f|
-          f.puts($!.message)
-          f.puts($!.backtrace)
-        end
+        rescue
+          # btw this breaks and is stupid
+        # FileUtils.mkdir_p(failed_dir)
+        # FileUtils.cp(file,File.join(failed_dir,File.basename(file)))
+        # File.open(File.join(failed_dir,"#{file}.error")) do |f|
+        #   f.puts($!.message)
+        #   f.puts($!.backtrace)
+        # end
         raise $!
       end
       end
 
-      def self.import_file(name,data,failed_dir,provider_map={})
+      def self.import_file(name,data,failed_dir,provider_map={}, import_type = nil)
         begin
           ext = File.extname(name)
           if ext == ".json"
-            BulkRecordImporter.import_json(data)
+            self.import_json(data)
           else
-            BulkRecordImporter.import(data)
+            self.import(data, {}, nil, import_type)
           end
         rescue
-          FileUtils.mkdir_p(File.dirname(File.join(failed_dir,name)))
-          File.open(File.join(failed_dir,name),"w") do |f|
-            f.puts(data)
-          end
-          File.open(File.join(failed_dir,"#{name}.error"),"w") do |f|
-            f.puts($!.message)
-            f.puts($!.backtrace)
-          end
+          #FileUtils.mkdir_p(File.dirname(File.join(failed_dir,name)))
+          #File.open(File.join(failed_dir,name),"w") do |f|
+          #  f.puts(data)
+          #end
+          #File.open(File.join(failed_dir,"#{name}.error"),"w") do |f|
+          #  f.puts($!.message)
+          #  f.puts($!.backtrace)
+          #end
+          raise $!
         end
       end
 
@@ -88,9 +91,7 @@ module HealthDataStandards
         record.save!
       end
 
-      def self.import(xml_data, provider_map = {})
-        doc = Nokogiri::XML(xml_data)
-
+      def self.import(xml_data, provider_map = {}, doc = Nokogiri::XML(xml_data), import_type = nil)
         providers = []
         root_element_name = doc.root.name
 
@@ -120,7 +121,7 @@ module HealthDataStandards
           return {status: 'error', message: 'Unknown XML Format', status_code: 400}
         end
 
-        record.provider_performances = providers
+        record.provider_performances << providers
         providers.each do |prov|
           prov.provider.ancestors.each do |ancestor|
             record.provider_performances.push(ProviderPerformance.new(start_date: prov.start_date, end_date: prov.end_date, provider: ancestor))

@@ -3,6 +3,8 @@
 <observation classCode="OBS" moodCode="EVN">
   <!-- Measure Data template -->
   <templateId root="2.16.840.1.113883.10.20.27.3.5"/>
+  <!-- CMS EP Measure Data template (CONF:711266) -->
+  <templateId root="2.16.840.1.113883.10.20.27.3.16"/>
   <code code="ASSERTION" 
         codeSystem="2.16.840.1.113883.5.4" 
         displayName="Assertion" 
@@ -15,10 +17,14 @@
   <entryRelationship typeCode="SUBJ" inversionInd="true">
     <observation classCode="OBS" moodCode="EVN">
       <templateId root="2.16.840.1.113883.10.20.27.3.3"/>
+      <!-- Aggregate Count (CMS EP) template ID (CONF:711263) -->
+      <templateId root="2.16.840.1.113883.10.20.27.3.24"/>
       <code code="MSRAGG" 
         displayName="rate aggregation" 
         codeSystem="2.16.840.1.113883.5.4" 
         codeSystemName="ActCode"/>
+      <!-- (CONF:711245) -->
+      <statusCode code="completed"/>
       <value xsi:type="INT" value="<%= population.value.round %>"/>
       <methodCode code="COUNT" 
         displayName="Count" 
@@ -33,21 +39,30 @@
   <entryRelationship typeCode="COMP">
     <observation classCode="OBS" moodCode="EVN">
       <templateId root="2.16.840.1.113883.10.20.27.3.4"/>
+      <!-- Reporting Stratum (CMS EP) template ID (CONF:711275) -->
+      <templateId root="2.16.840.1.113883.10.20.27.3.20"/>
       <code code="ASSERTION" 
             codeSystem="2.16.840.1.113883.5.4" 
             displayName="Assertion" 
             codeSystemName="ActCode"/>
       <statusCode code="completed"/>
+      <!-- TODO: (CONF:711232) requires us to know the code element in the measure, but this isn't stored.
+                value is a SHOULD though. Might always be 2112-8 birth date?
       <value xsi:type="CD" nullFlavor="OTH">
        <originalText>Stratum</originalText>
       </value>
+      -->
       <entryRelationship typeCode="SUBJ" inversionInd="true">
         <observation classCode="OBS" moodCode="EVN">
           <templateId root="2.16.840.1.113883.10.20.27.3.3"/>
+          <!-- Aggregate Count (CMS EP) template ID CONF:711263. -->
+          <templateId root="2.16.840.1.113883.10.20.27.3.24"/>
           <code code="MSRAGG" 
                 displayName="rate aggregation" 
                 codeSystem="2.16.840.1.113883.5.4" 
                 codeSystemName="ActCode"/>
+          <!-- (CONF:711245) -->
+          <statusCode code="completed"/>
           <value xsi:type="INT" value="<%= strat.value.round %>"/>
           <methodCode code="COUNT" 
                       displayName="Count" 
@@ -76,51 +91,56 @@
   <% end -%>
   <% if population.supplemental_data.present? -%>
   <%   sex_supplimental_data = population.supplemental_data["SEX"]
-       if sex_supplimental_data.present?
-         sex_supplimental_data.each do |sex, count| -%>
+       supplemental_info[:sex].each do |concept|
+         sex = concept
+         count = sex_supplimental_data[sex] || 0 -%>
    
    <!--    SEX Supplemental Data Reporting for <%= population.type %>  <%= population.id %>      --> 
          
   <%== render :partial => 'supplemental_data', :locals => {:template_name => 'Sex Supplemental Data', 
-                :template_ids => ['2.16.840.1.113883.10.20.27.3.6'], :supplemental_data_code => '184100006',
+                :template_ids => ['2.16.840.1.113883.10.20.27.3.6'], :supplemental_data_code => '184100006',  
+                :cms_template_id => '2.16.840.1.113883.10.20.27.3.21',
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => sex,
-                :supplemental_data_value_code_system => '2.16.840.1.113883.5.1', :count => count} %>   
+                :supplemental_data_value_code_system => '2.16.840.1.113762.1.4.1', :count => count} %>
       <% end -%>
-    <% end -%>
   <%   ethnicity_supplimental_data = population.supplemental_data["ETHNICITY"]
-       if ethnicity_supplimental_data.present?
-         ethnicity_supplimental_data.each do |ethnicity, count| -%>
+       supplemental_info[:ethnicity].each do |concept|
+         ethnicity = concept
+         count = sex_supplimental_data[ethnicity] || 0 -%>
 
     <!--     ETHNICITY Supplemental Data Reporting  for <%= population.type %>  <%= population.id %>     --> 
 
   <%== render :partial => 'supplemental_data', :locals => {:template_name => 'Ethnicity Supplemental Data', 
-                :template_ids => ['2.16.840.1.113883.10.20.27.3.7'], :supplemental_data_code => '364699009',
+                :template_id => '2.16.840.1.113883.10.20.27.3.7', :supplemental_data_code => '364699009', 
+                :cms_template_id => '2.16.840.1.113883.10.20.27.3.22',                                           
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => ethnicity,
                 :supplemental_data_value_code_system => '2.16.840.1.113883.6.238', :count => count} %>   
       <% end -%>
-    <% end -%>
   <%   race_supplimental_data = population.supplemental_data["RACE"]
-       if race_supplimental_data.present?
-         race_supplimental_data.each do |race, count| -%>
+        supplemental_info[:race].each do |concept|
+            race = concept
+            count = race_supplimental_data[race] || 0
+  -%>
 
    <!--      RACE Supplemental Data Reporting  for <%= population.type %>  <%= population.id %> --> 
 
   <%== render :partial => 'supplemental_data', :locals => {:template_name => 'Race Supplemental Data', 
-                :template_ids => ['2.16.840.1.113883.10.20.27.3.8'], :supplemental_data_code => '103579009',
+                :template_ids => ['2.16.840.1.113883.10.20.27.3.8'], :cms_template_id => '2.16.840.1.113883.10.20.27.3.19',
+                :supplemental_data_code => '103579009',
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => race,
                 :supplemental_data_value_code_system => '2.16.840.1.113883.6.238', :count => count} %>   
       <% end -%>
-    <% end -%>
-  <%   payer_supplimental_data = population.supplemental_data["PAYER"]
-       if payer_supplimental_data.present?
-         payer_supplimental_data.each do |payer, count| -%>
+  <%   payer_supplimental_data = population.supplemental_data["CMS_PAYER"]
+       supplemental_info[:payer].each do |concept|
+         payer = concept
+         count = payer_supplimental_data[payer] || 0 -%>
 
  <!--         PAYER Supplemental Data Reporting   for<%= population.type %>  <%= population.id %>   -->        
  <%== render :partial => 'supplemental_data', :locals => {:template_name => 'Payer Supplemental Data', 
                 :template_ids => ['2.16.840.1.113883.10.20.27.3.9', '2.16.840.1.113883.10.20.24.3.55'], :supplemental_data_code => '48768-6',
+                :cms_template_id => '2.16.840.1.113883.10.20.27.3.18',
                 :supplemental_data_code_system => '2.16.840.1.113883.6.1', :supplemental_data_value_code => payer,
-                :supplemental_data_value_code_system => '2.16.840.1.113883.3.221.5', :count => count} %>   
-      <% end -%>
+                :supplemental_data_value_code_system => '2.16.840.1.113883.3.221.5', :count => count} %>
     <% end -%>
   <% end -%>
   <% if population.type == 'MSRPOPL' -%>

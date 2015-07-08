@@ -78,8 +78,12 @@ module HealthDataStandards
       include PopulationSelectors
       attr_accessor :populations
       def performance_rate
-        numerator_count.to_f / 
-          (denominator_count - denominator_exclusions_count - denominator_exceptions_count)
+        if (denominator_count - denominator_exclusions_count - denominator_exceptions_count)
+          0
+        else
+          numerator_count.to_f /
+            (denominator_count - denominator_exclusions_count - denominator_exceptions_count)
+        end
       end
 
       def is_cv?

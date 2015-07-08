@@ -87,7 +87,7 @@ module HealthDataStandards
         pipeline << {'$project' => {'category' => '$_id', 'measures' => 1, '_id' => 0}}
 
         pipeline << {'$sort' => {"category" => 1}}
-        Mongoid.default_session.command(aggregate: 'measures', pipeline: pipeline)['result']
+        mongo_session.command(aggregate: 'measures', pipeline: pipeline)['result']
       end
 
 

@@ -21,7 +21,22 @@ module HealthDataStandards
         # Returns an Array of Hashes. Hashes will have a three key/value pairs. One for the data criteria oid,
         # one for the value set oid and one for the data criteria itself
         def unique_data_criteria(measures)
-          all_data_criteria = measures.map {|measure| measure.all_data_criteria}.flatten
+          all_data_criteria = measures.map do |measure|
+            extras = [#'PatientCharacteristicRaceRace', 'PatientCharacteristicEthnicityEthnicity',
+                      #'PatientCharacteristicSexOncAdministrativeSex',
+                      'PatientCharacteristicPayerPayer']
+            extra_crit = extras.map do |x|
+              entry = measure.hqmf_document['data_criteria'][x]
+              HQMF::DataCriteria.from_json(entry['code_list_id'],JSON.parse(entry.to_json))
+            end
+            measure.all_data_criteria.concat extra_crit
+          end.flatten
+          negation_synonyms = {'2.16.840.1.113883.3.560.1.129' => '2.16.840.1.113883.3.560.1.29',
+          '2.16.840.1.113883.3.560.1.106' => '2.16.840.1.113883.3.560.1.6',
+          #'2.16.840.1.113883.3.560.1.103' => '2.16.840.1.113883.3.560.1.3',
+          #'2.16.840.1.113883.3.560.1.129' => '2.16.840.1.113883.10.20.24.3.4'
+          }
+
           mapped_data_criteria = {}
           all_data_criteria.each do |data_criteria|
             data_criteria_oid = HQMFTemplateHelper.template_id_by_definition_and_status(data_criteria.definition,
@@ -42,10 +57,17 @@ module HealthDataStandards
             if data_criteria.value && data_criteria.value.type == "CD"
               mapping["result_oids"] << data_criteria.value.code_list_id
             end
-
-            # {'data_criteria_oid' => data_criteria_oid, 'value_set_oid' => value_set_oid, 'data_criteria' => data_criteria}
+            if negation_synonyms[data_criteria_oid]
+              dc2 = dc.clone
+              dc2['data_criteria_oid'] = negation_synonyms[data_criteria_oid]
+              mapped_data_criteria[dc2] = mapped_data_criteria[dc].clone
+              mapped_data_criteria[dc2]['data_criteria'] = mapped_data_criteria[dc2]['data_criteria'].clone
+              mapped_data_criteria[dc2]['data_criteria'].negation = false
+            end
           end
+
           # unioned_data_criteria.uniq_by {|thingy| [thingy['data_criteria_oid'], thingy['value_set_oid']]}
+          #pp mapped_data_criteria.collect{|dc| dc[0].merge dc[1] }
           mapped_data_criteria.collect{|dc| dc[0].merge dc[1] }
         end
 
@@ -56,6 +78,7 @@ module HealthDataStandards
             data_criteria_oid = HQMFTemplateHelper.template_id_by_definition_and_status(data_criteria.definition,
                                                                                         data_criteria.status || '',
                                                                                         data_criteria.negation)
+
             if entry.respond_to?(:oid) && (entry.oid == data_criteria_oid)
               codes = *(value_set_map(entry.record["bundle_id"])[data_criteria_info['value_set_oid']] || [])
               if codes.empty?
@@ -101,8 +124,11 @@ module HealthDataStandards
                  entries.concat patient.entries_for_oid('2.16.840.1.113883.3.560.1.6')
               when '2.16.840.1.113883.3.560.1.3'
                  entries.concat patient.entries_for_oid('2.16.840.1.113883.3.560.1.11')
+                 entries.concat patient.entries_for_oid('2.16.840.1.113883.3.560.1.103')
               when  '2.16.840.1.113883.3.560.1.11'
                  entries.concat patient.entries_for_oid('2.16.840.1.113883.3.560.1.3')
+                when '2.16.840.1.113883.3.560.1.29'
+                  entries.concat patient.entries_for_oid('2.16.840.1.113883.3.560.1.129')
               end
 
             codes = (value_set_map(patient["bundle_id"])[data_criteria.code_list_id] || [])
@@ -116,7 +142,7 @@ module HealthDataStandards
                 entry.negation_reason.present? && codes.first['values'].include?(entry.negation_reason['code'])
               else
                 # The !! hack makes sure that negation_ind is a boolean
-                entry.is_in_code_set?(codes) && !!entry.negation_ind == data_criteria.negation
+                entry.is_in_code_set?(codes) # && !!entry.negation_ind == data_criteria.negation
               end
             end
           end

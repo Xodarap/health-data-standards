@@ -74,7 +74,7 @@ module HealthDataStandards
           import_sections(record, doc)
           get_clinical_trial_participant(record, doc)
           get_patient_expired(record, doc)
-          record.dedup_record!
+          #record.dedup_record!
           record
         end
 
@@ -85,7 +85,6 @@ module HealthDataStandards
           nrh.build_id_map(doc)
           @section_importers.each do |section, entry_packages|
             entry_packages.each do |entry_package|
-              # binding.pry if section == :results
               record.send(section) << entry_package.package_entries(context, nrh)
             end
           end
@@ -104,7 +103,8 @@ module HealthDataStandards
         private
 
         def generate_importer(importer_class, xpath, hqmf_oid, status=nil)
-          if importer_class.parent_name == "HealthDataStandards::Import::CDA"
+          #TODO what is this if statement for?!
+          if importer_class.parent_name == "HealthDataStandards::Import::CDA" # || importer_class.name == "HealthDataStandards::Import::Cat1::ProcedurePerformedImporter"
             importer = EntryPackage.new(importer_class.new(CDA::EntryFinder.new(xpath)), hqmf_oid, status)
           else
             importer = EntryPackage.new(importer_class.new, hqmf_oid, status)

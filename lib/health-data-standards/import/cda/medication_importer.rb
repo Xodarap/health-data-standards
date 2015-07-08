@@ -43,8 +43,13 @@ module HealthDataStandards
           
           extract_fulfillment_history(entry_element, medication)
           extract_negation(entry_element, medication)
-          
+          medication.status_code = {'HL7 ActStatus'=> ['ordered']}
           medication
+        end
+
+        def extract_status(parent_element, entry)
+          entry.status_code = {'HL7 ActStatus'=> 'ordered'}
+
         end
 
         private
