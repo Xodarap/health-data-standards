@@ -90,10 +90,13 @@
   </entryRelationship>
   <% end -%>
   <% if population.supplemental_data.present? -%>
-  <%   sex_supplimental_data = population.supplemental_data["SEX"]
-       supplemental_info[:sex].each do |concept|
-         sex = concept
-         count = sex_supplimental_data[sex] || 0 -%>
+    <% sex_supplemental_data = population.supplemental_data["SEX"]
+       if cms_mode
+         sex_categories = Hash[supplemental_info[:sex].map { |sex| [sex, sex_supplemental_data[sex] || 0] }]
+       else
+         sex_categories = sex_supplemental_data
+       end
+       sex_categories.each do |sex, count|-%>
    
    <!--    SEX Supplemental Data Reporting for <%= population.type %>  <%= population.id %>      --> 
          
@@ -106,12 +109,12 @@
   <%   ethnicity_supplimental_data = population.supplemental_data["ETHNICITY"]
        supplemental_info[:ethnicity].each do |concept|
          ethnicity = concept
-         count = sex_supplimental_data[ethnicity] || 0 -%>
+         count = sex_supplemental_data[ethnicity] || 0 -%>
 
     <!--     ETHNICITY Supplemental Data Reporting  for <%= population.type %>  <%= population.id %>     --> 
 
   <%== render :partial => 'supplemental_data', :locals => {:template_name => 'Ethnicity Supplemental Data', 
-                :template_id => '2.16.840.1.113883.10.20.27.3.7', :supplemental_data_code => '364699009', 
+                :template_ids => ['2.16.840.1.113883.10.20.27.3.7'], :supplemental_data_code => '364699009',
                 :cms_template_id => '2.16.840.1.113883.10.20.27.3.22',                                           
                 :supplemental_data_code_system => '2.16.840.1.113883.6.96', :supplemental_data_value_code => ethnicity,
                 :supplemental_data_value_code_system => '2.16.840.1.113883.6.238', :count => count} %>   

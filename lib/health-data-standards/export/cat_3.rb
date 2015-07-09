@@ -19,7 +19,7 @@ module HealthDataStandards
         }
       end
 
-      def export(measures, header, effective_date, start_date, end_date, filter=nil,test_id=nil)
+      def export(measures, header, effective_date, start_date, end_date, filter=nil,test_id=nil, cms_mode = false)
         results = {}
         measures.each do |measure|
           results[measure['hqmf_id']] = HealthDataStandards::CQM::QueryCache.aggregate_measure(measure['hqmf_id'], effective_date, filter, test_id)
@@ -28,7 +28,7 @@ module HealthDataStandards
                                   :locals => {:measures => measures, :start_date => start_date, 
                                               :end_date => end_date, :cat1_renderer => @cat1_renderer,
                                               :results => results, :supplemental_info => @supplemental_info,
-                                              :header=>header})
+                                              :header=>header, :cms_mode  => cms_mode})
       end
     end
   end

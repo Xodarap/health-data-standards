@@ -180,7 +180,10 @@ Measure Section
               <% result.populations.each do |pop|
                        unless pop.type == 'OBSERV' -%>
                       <component>
-                      <%== render :partial => 'measure_data', :locals => {:aggregate_count => result, :population => pop, :supplemental_info => supplemental_info} %>
+                      <%== render :partial => 'measure_data', :locals => {:aggregate_count => result, :population => pop,
+                                                                          :supplemental_info => supplemental_info,
+                                                                          :cms_mode => cms_mode
+                                                              } %>
                       </component>
               <%   end
              end -%>
